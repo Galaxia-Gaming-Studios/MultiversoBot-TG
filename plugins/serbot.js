@@ -1,3 +1,4 @@
+// © serbot 1.2 EliasarYT 
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
