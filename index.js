@@ -180,7 +180,7 @@ const iniciarBot = async () => {
     const bot = new Telegraf(token);
 
     // Cargar comandos desde la carpeta comandos
-    cargarComandos(path.join(__dirname, 'comandos'), bot);
+    cargarComandos(path.join(__dirname, 'plugins'), bot);
 
     bot.on('text', (ctx) => {
         logMessage(ctx);
