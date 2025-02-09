@@ -16,7 +16,7 @@ function getUserZonaHoraria(userId) {
 function selectFileWithProbability() {
     const fileNamesWithProbabilities = [
         { filePath: './src/menu_1.jpg', probability: 90 },
-        { filePath: './src/menu_2.mp4', probability: 50 },
+        { filePath: './src/menu_2.mp4', probability: 60 },
         { filePath: './src/menu_3.mp4', probability: 70 },
         { filePath: './src/menu_4.mp4', probability: 60 },
         { filePath: './src/menu_5.mp4', probability: 80 }
