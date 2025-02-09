@@ -8,8 +8,9 @@ module.exports = (bot) => {
     bot.command('actualizar', async (ctx) => {
         const repoUrl = 'https://github.com/Galaxia-Gaming-Studios/MultiversoBot-TG.git';
         const localPath = path.join(__dirname, '../temp-repo');
-        
-        // Clone or pull the latest changes from the repository
+        const mainPath = path.join(__dirname, '../');
+
+        // Clonar o actualizar el repositorio
         const updateRepo = async () => {
             if (!fs.existsSync(localPath)) {
                 await git.clone(repoUrl, localPath);
@@ -18,75 +19,47 @@ module.exports = (bot) => {
             }
         };
 
-        try {
-            await updateRepo();
-
-            // Path to the files and directories to be updated
-            const filesToUpdate = [
-                'index.js',
-                'package.json',
-                'package-lock.json',
-                '.nomedia'
-            ];
-            const directoriesToUpdate = [
-                'comandos',
-                'src',
-                'config'
-            ];
-
-            // Update files
-            for (const file of filesToUpdate) {
-                const remoteFilePath = path.join(localPath, file);
-                const localFilePath = path.join(__dirname, '../', file);
-                
-                if (fs.existsSync(remoteFilePath)) {
-                    const remoteFileContent = fs.readFileSync(remoteFilePath, 'utf-8');
-                    const localFileContent = fs.existsSync(localFilePath) ? fs.readFileSync(localFilePath, 'utf-8') : '';
-
-                    if (remoteFileContent !== localFileContent) {
-                        fs.writeFileSync(localFilePath, remoteFileContent);
-                        ctx.reply(`El archivo ${file} ha sido actualizado.`);
-                    } else {
-                        ctx.reply(`El archivo ${file} no ha cambiado.`);
-                    }
-                }
-            }
-
-            // Update directories
-            const updateDirectory = (source, destination) => {
+        // Copiar todo el contenido del repositorio, excluyendo datos dentro de "database"
+        const copyRepoContent = async () => {
+            const copyDirectory = (source, destination) => {
                 const files = fs.readdirSync(source);
-                
+
                 files.forEach(file => {
                     const sourceFile = path.join(source, file);
                     const destFile = path.join(destination, file);
-                    
+
+                    // Excluir datos dentro de "database"
+                    if (sourceFile.includes(path.join('database', path.sep))) {
+                        return; // No copiar archivos dentro de "database"
+                    }
+
                     if (fs.lstatSync(sourceFile).isDirectory()) {
                         if (!fs.existsSync(destFile)) {
                             fs.mkdirSync(destFile);
                         }
-                        updateDirectory(sourceFile, destFile);
+                        copyDirectory(sourceFile, destFile);
                     } else {
-                        const sourceContent = fs.readFileSync(sourceFile, 'utf-8');
-                        const destContent = fs.existsSync(destFile) ? fs.readFileSync(destFile, 'utf-8') : '';
-
-                        if (sourceContent !== destContent) {
-                            fs.writeFileSync(destFile, sourceContent);
-                            ctx.reply(`El archivo ${destFile} ha sido actualizado.`);
-                        }
+                        fs.copyFileSync(sourceFile, destFile);
+                        ctx.reply(`Archivo copiado: ${destFile}`);
                     }
                 });
             };
 
-            for (const directory of directoriesToUpdate) {
-                const remoteDirPath = path.join(localPath, directory);
-                const localDirPath = path.join(__dirname, '../', directory);
+            copyDirectory(localPath, mainPath);
+        };
 
-                if (fs.existsSync(remoteDirPath)) {
-                    updateDirectory(remoteDirPath, localDirPath);
-                }
-            }
+        try {
+            // Actualizar el repositorio
+            await updateRepo();
 
-            ctx.reply('Actualización completada.');
+            // Copiar todo el contenido del repositorio
+            await copyRepoContent();
+
+            // Eliminar el directorio temporal
+            fs.rmSync(localPath, { recursive: true, force: true });
+            ctx.reply('Directorio temporal eliminado.');
+
+            ctx.reply('Actualización completada correctamente.');
         } catch (error) {
             console.error('Error al actualizar el repositorio:', error);
             ctx.reply('Hubo un error al actualizar el repositorio.');
