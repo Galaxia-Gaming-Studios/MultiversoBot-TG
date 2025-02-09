@@ -6,6 +6,31 @@ const cfonts = require('cfonts');
 const gradient = require('gradient-string');
 const readline = require('readline');
 
+// Función para limpiar la carpeta ./tmp
+const limpiarTmp = () => {
+    const tmpDir = './tmp';
+    if (fs.existsSync(tmpDir)) {
+        fs.readdirSync(tmpDir).forEach(file => {
+            const filePath = path.join(tmpDir, file);
+            try {
+                if (fs.lstatSync(filePath).isDirectory()) {
+                    fs.rmdirSync(filePath, { recursive: true });
+                } else {
+                    fs.unlinkSync(filePath);
+                }
+                console.log(`${chalk.green(`Eliminado:`)} ${filePath}`);
+            } catch (err) {
+                console.error(`${chalk.red(`Error al eliminar ${filePath}:`)}`, err);
+            }
+        });
+    } else {
+        console.log(`${chalk.yellow('La carpeta ./tmp no existe.')}`);
+    }
+};
+
+// Ejecutar la limpieza cada hora (3600000 ms = 1 hora)
+setInterval(limpiarTmp, 3600000);
+
 // Función para pedir el token
 const pedirToken = () => {
     return new Promise((resolve) => {
@@ -113,7 +138,7 @@ const mostrarBanner = () => {
     console.log(gradient.rainbow(welcomeMessage));
 };
 
-// Cargar comandos dinámicamente
+// Cargar comandos dinámicamente (sin notificaciones)
 const cargarComandos = (dir, bot) => {
     fs.readdirSync(dir, { withFileTypes: true }).forEach(item => {
         const fullPath = path.join(dir, item.name);
@@ -124,12 +149,9 @@ const cargarComandos = (dir, bot) => {
                 const comando = require(fullPath);
                 if (typeof comando === 'function') {
                     comando(bot);
-                    console.log(`${chalk.white(`Comando cargado: ${fullPath}`)}`);
-                } else {
-                    console.error(`${chalk.red(`Error al cargar el comando en ${fullPath}. Asegúrate de que exporta una función.`)}`);
                 }
             } catch (err) {
-                console.error(`${chalk.red(`Error al cargar el comando ${fullPath}:`)}`, err.message);
+                // No mostrar errores
             }
         }
     });
@@ -159,7 +181,7 @@ function logMessage(ctx, command = null) {
 
     console.log(`
 ${chalk.blue(`╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌≫`)}
-${chalk.blue(`╎`)}${chalk.blue(`🌌 Bienvenid@ A GalaxiBot-TG🌌`)}
+${chalk.blue(`╎`)}${chalk.blue(`🌌 Bienvenid@ A MultiversoBot-TG🌌`)}
 ${chalk.blue(`╎`)}${chalk.cyan(`🆔 IDs: ${ctx.from.id}`)}
 ${chalk.blue(`╎`)}${chalk.magenta(`🕕 Hora: ${formatTime()}`)}
 ${chalk.blue(`╎`)}${chalk.blue(`👥 Grupo: ${chatTitle}`)}
@@ -181,6 +203,18 @@ const iniciarBot = async () => {
 
     // Cargar comandos desde la carpeta comandos
     cargarComandos(path.join(__dirname, 'plugins'), bot);
+
+    // Escuchar el comando /comandos en la consola
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    rl.on('line', (input) => {
+        if (input.trim() === '/comandos') {
+            // Mostrar comandos cargados (si es necesario)
+        }
+    });
 
     bot.on('text', (ctx) => {
         logMessage(ctx);
