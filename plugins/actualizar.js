@@ -7,7 +7,7 @@ const git = simpleGit();
 module.exports = (bot) => {
     bot.command('actualizar', async (ctx) => {
         const repoUrl = 'https://github.com/Galaxia-Gaming-Studios/MultiversoBot-TG.git';
-        const localPath = path.join(__dirname, '../temp-repo');
+        const localPath = path.join(__dirname, '../tmp/temp-repo');
         const mainPath = path.join(__dirname, '../');
 
         // Clonar o actualizar el repositorio
