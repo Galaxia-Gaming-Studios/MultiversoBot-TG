@@ -15,11 +15,11 @@ function getUserZonaHoraria(userId) {
 // Función para seleccionar un archivo basado en probabilidades
 function selectFileWithProbability() {
     const fileNamesWithProbabilities = [
-        { filePath: './src/menu_1.jpg', probability: 50 },
-        { filePath: './src/menu_2.mp4', probability: 80 },
+        { filePath: './src/menu_1.jpg', probability: 90 },
+        { filePath: './src/menu_2.mp4', probability: 50 },
         { filePath: './src/menu_3.mp4', probability: 70 },
         { filePath: './src/menu_4.mp4', probability: 60 },
-        { filePath: './src/menu_5.mp4', probability: 90 }
+        { filePath: './src/menu_5.mp4', probability: 80 }
     ];
 
     const validFiles = fileNamesWithProbabilities.filter(file => fs.existsSync(file.filePath));
@@ -101,11 +101,11 @@ async function sendMedia(ctx) {
                 ],
                 [
                     { text: '⚙️On/Off🛠️', callback_data: 'menu_on_off' },
-                    { text: '🛠️Owner🎟️', callback_data: 'memu_owner' }
+                    { text: '👑Owner👑', callback_data: 'memu_owner' }
                 ],
                 [
-                    { text: 'Nada no se falta', callback_data: 'nada' },
-                    { text: '💾Colaboradores💻', callback_data: 'Colaboradores' }
+                    { text: '🪙RPG💎', callback_data: 'rpg' },
+                    { text: 'Info', callback_data: 'info' }
                 ]
             ]
         }
