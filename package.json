@@ -21,6 +21,7 @@
     "groq-sdk": "^0.12.0",
     "lowdb": "^7.0.1",
     "moment-timezone": "^0.5.46",
+    "mongodb": "^6.13.0",
     "node-fetch": "^3.3.2",
     "path": "^0.12.7",
     "punycode": "^2.3.1",
