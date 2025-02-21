@@ -1,27 +1,39 @@
-const { MongoClient } = require('mongodb');
-const moment = require('moment-timezone');
 const fs = require('fs');
 const path = require('path');
+const moment = require('moment-timezone');
 
-// Conexión a MongoDB
-const mongoClient = new MongoClient('mongodb://localhost:27017');
-let db;
+// Ruta del archivo JSON
+const jsonFilePath = path.join(__dirname, 'database', 'reg.json');
 
-(async () => {
-    try {
-        await mongoClient.connect();
-        db = mongoClient.db('rpg_bot');
-        console.log('✅ Conexión a MongoDB establecida');
-    } catch (err) {
-        console.error('❌ Error conectando a MongoDB:', err);
+// IDs del canal y mensajes
+const CHANNEL_ID = -1002482643041; // ID del grupo/canal
+const INSTRUCTION_MESSAGE_ID = 6; // ID del mensaje de instrucciones
+const OTHER_MESSAGE_ID = 12; // ID de otro mensaje
+
+// Probabilidades de enviar mensajes reenviados
+const PROBABILITY_INSTRUCTION = 58; // 58% de probabilidad
+const PROBABILITY_OTHER = 36; // 36% de probabilidad
+
+// Función para cargar el archivo JSON
+function loadJson() {
+    if (!fs.existsSync(jsonFilePath)) {
+        fs.writeFileSync(jsonFilePath, JSON.stringify([], null, 2), 'utf-8');
     }
-})();
-
-function generateSerial() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    return Array.from({length: 8}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'));
 }
 
+// Función para guardar en el archivo JSON
+function saveJson(data) {
+    fs.writeFileSync(jsonFilePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+// Función para generar número de serie
+function generateSerial() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+// Función para seleccionar archivo multimedia
 function selectFileWithProbability() {
     const files = [
         { path: './src/menu_1.jpg', prob: 90 },
@@ -45,24 +57,48 @@ function selectFileWithProbability() {
     return files[0].path;
 }
 
+// Función para decidir si enviar un mensaje reenviado
+function shouldSendMessage(probability) {
+    return Math.random() * 100 < probability;
+}
+
 module.exports = (bot) => {
+    // Comando de registro
     bot.command('reg', async (ctx) => {
         const args = ctx.message.text.split(' ').slice(1);
-        
+
         if (args.length < 1) {
-            return ctx.reply('⚠️ Formato: /reg [nombre_usuario] [edad]');
+            return ctx.reply('⚠️ Formato: /reg [nombre.edad]\nEjemplo: /reg jimmy.15', {
+                reply_to_message_id: ctx.message.message_id,
+                parse_mode: 'Markdown'
+            });
         }
-        
-        const [nombreUsuario, edadArg] = args;
+
+        const [nombreEdad] = args;
+        const [nombreUsuario, edadArg] = nombreEdad.split('.');
         const edad = parseInt(edadArg, 10) || 0;
         const userId = ctx.from.id;
-        
+
         try {
-            const userExist = await db.collection('users').findOne({ id_telegram: userId });
+            const users = loadJson();
+            const userExist = users.find(user => user.id_telegram === userId);
             if (userExist) {
-                return ctx.reply('❌ ¡Ya estás registrado!');
+                // Si ya está registrado, sugerir usar /perfil
+                await ctx.reply('❌ ¡Ya estás registrado! Te recomendamos usar /perfil para ver tu información.', {
+                    reply_to_message_id: ctx.message.message_id,
+                    parse_mode: 'Markdown'
+                });
+
+                // Enviar mensaje reenviado con probabilidad
+                if (shouldSendMessage(PROBABILITY_INSTRUCTION)) {
+                    await ctx.forwardMessage(ctx.chat.id, CHANNEL_ID, INSTRUCTION_MESSAGE_ID);
+                } else if (shouldSendMessage(PROBABILITY_OTHER)) {
+                    await ctx.forwardMessage(ctx.chat.id, CHANNEL_ID, OTHER_MESSAGE_ID);
+                }
+
+                return;
             }
-            
+
             const newUser = {
                 id_telegram: userId,
                 nombre_usuario: nombreUsuario,
@@ -81,9 +117,10 @@ module.exports = (bot) => {
                 tokens: 10,
                 trabajo: 'Sin trabajo'
             };
-            
-            await db.collection('users').insertOne(newUser);
-            
+
+            users.push(newUser);
+            saveJson(users);
+
             const filePath = selectFileWithProbability();
             const region = newUser.zona_horaria.split('/')[1].replace(/_/g, ' ');
             const caption = `
@@ -117,17 +154,70 @@ module.exports = (bot) => {
 
             if (filePath) {
                 if (filePath.endsWith('.mp4')) {
-                    await ctx.replyWithVideo({ source: filePath }, { caption, parse_mode: 'Markdown', ...buttons });
+                    await ctx.replyWithVideo({ source: filePath }, { caption, parse_mode: 'Markdown', reply_to_message_id: ctx.message.message_id, ...buttons });
                 } else {
-                    await ctx.replyWithPhoto({ source: filePath }, { caption, parse_mode: 'Markdown', ...buttons });
+                    await ctx.replyWithPhoto({ source: filePath }, { caption, parse_mode: 'Markdown', reply_to_message_id: ctx.message.message_id, ...buttons });
                 }
             } else {
-                await ctx.reply(caption, { parse_mode: 'Markdown', ...buttons });
+                await ctx.reply(caption, { parse_mode: 'Markdown', reply_to_message_id: ctx.message.message_id, ...buttons });
             }
-            
+
         } catch (error) {
             console.error('Error en registro:', error);
-            ctx.reply('❌ Error en el registro');
+            ctx.reply('❌ Error en el registro', {
+                reply_to_message_id: ctx.message.message_id,
+                parse_mode: 'Markdown'
+            });
         }
+    });
+
+    // Comando para eliminar registro
+    bot.command('eliminarregistro', async (ctx) => {
+        const args = ctx.message.text.split(' ').slice(1);
+
+        if (args.length < 1) {
+            return ctx.reply('⚠️ Formato: /eliminarregistro [número_serie]\nEjemplo: /eliminarregistro ABC123XYZ', {
+                reply_to_message_id: ctx.message.message_id,
+                parse_mode: 'Markdown'
+            });
+        }
+
+        const [numeroSerie] = args;
+        const userId = ctx.from.id;
+
+        try {
+            const users = loadJson();
+            const userIndex = users.findIndex(user => user.id_telegram === userId && user.numero_serie === numeroSerie);
+
+            if (userIndex === -1) {
+                return ctx.reply('❌ Número de serie inválido o no estás registrado.', {
+                    reply_to_message_id: ctx.message.message_id,
+                    parse_mode: 'Markdown'
+                });
+            }
+
+            users.splice(userIndex, 1);
+            saveJson(users);
+
+            ctx.reply('✅ Tu registro ha sido eliminado correctamente.', {
+                reply_to_message_id: ctx.message.message_id,
+                parse_mode: 'Markdown'
+            });
+
+        } catch (error) {
+            console.error('Error eliminando registro:', error);
+            ctx.reply('❌ Error al eliminar el registro.', {
+                reply_to_message_id: ctx.message.message_id,
+                parse_mode: 'Markdown'
+            });
+        }
+    });
+
+    // Acción del botón "Eliminar Cuenta"
+    bot.action('delete_account', async (ctx) => {
+        await ctx.reply('⚠️ Para eliminar tu cuenta, usa el comando /eliminarregistro seguido de tu número de serie.', {
+            reply_to_message_id: ctx.message.message_id,
+            parse_mode: 'Markdown'
+        });
     });
 };
