@@ -1,17 +1,23 @@
+const fs = require('fs');
+const path = require('path');
 const moment = require('moment-timezone');
-const { MongoClient } = require('mongodb');
 
-const mongoClient = new MongoClient('mongodb://localhost:27017');
-let db;
+// Configuración de rutas
+const DB_PATH = path.join(__dirname, '..', 'database', 'reg.json');
 
-(async () => {
+// Función para cargar usuarios
+function loadUsers() {
     try {
-        await mongoClient.connect();
-        db = mongoClient.db('rpg_bot');
-    } catch (err) {
-        console.error('Error MongoDB:', err);
+        if (!fs.existsSync(DB_PATH)) {
+            fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+            fs.writeFileSync(DB_PATH, '[]');
+        }
+        return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+    } catch (error) {
+        console.error('Error cargando usuarios:', error);
+        return [];
     }
-})();
+}
 
 function getBotUptime() {
     const seconds = process.uptime();
@@ -23,10 +29,21 @@ function getBotUptime() {
     ].join(' : ');
 }
 
+function selectFileWithProbability() {
+    // ... (tu implementación existente)
+}
+
 async function sendMedia(ctx) {
     try {
-        const user = await db.collection('users').findOne({ id_telegram: ctx.from.id });
-        if (!user) return ctx.reply('⚠️ Primero regístrate con /reg');
+        const users = loadUsers();
+        const user = users.find(u => u.id_telegram === ctx.from.id);
+        
+        if (!user) {
+            return ctx.reply('⚠️ Primero regístrate con /reg', {
+                reply_to_message_id: ctx.message.message_id,
+                parse_mode: 'Markdown'
+            });
+        }
 
         const filePath = selectFileWithProbability();
         const uptime = getBotUptime();
@@ -73,19 +90,27 @@ async function sendMedia(ctx) {
             }
         };
 
+        const options = {
+            parse_mode: 'Markdown',
+            reply_to_message_id: ctx.message?.message_id,
+            ...buttons
+        };
+
         if (filePath) {
             if (filePath.endsWith('.mp4')) {
-                await ctx.replyWithVideo({ source: filePath }, { caption, parse_mode: 'Markdown', ...buttons });
+                await ctx.replyWithVideo({ source: filePath }, { caption, ...options });
             } else {
-                await ctx.replyWithPhoto({ source: filePath }, { caption, parse_mode: 'Markdown', ...buttons });
+                await ctx.replyWithPhoto({ source: filePath }, { caption, ...options });
             }
         } else {
-            await ctx.reply(caption, { parse_mode: 'Markdown', ...buttons });
+            await ctx.reply(caption, options);
         }
 
     } catch (error) {
         console.error('Error en menú:', error);
-        ctx.reply('❌ Error al mostrar el menú');
+        ctx.reply('❌ Error al mostrar el menú', {
+            reply_to_message_id: ctx.message?.message_id
+        });
     }
 }
 
