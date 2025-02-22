@@ -3,7 +3,7 @@ const path = require('path');
 const moment = require('moment-timezone');
 
 // Configuración de rutas
-const DB_PATH = path.join(__dirname, 'database', 'reg.json');
+const DB_PATH = path.join(__dirname, '..', 'database', 'reg.json');
 
 // Sistema de probabilidades mejorado
 class ProbabilitySystem {
