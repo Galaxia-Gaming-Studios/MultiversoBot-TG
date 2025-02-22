@@ -24,7 +24,7 @@ cd MultiversoBot-TG
 npm install
 ```
 ```
-node index.js
+npm start
 ```
 ### Soporte Técnico 
 [WhatsApp](6)
