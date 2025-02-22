@@ -30,7 +30,7 @@ class ProbabilitySystem {
   }
 }
 
-// Gestor de base de datos JSON
+// Gestor de base de datos JSON robusto
 class Database {
   constructor() {
     this.ensureDatabase();
@@ -39,15 +39,26 @@ class Database {
   ensureDatabase() {
     if (!fs.existsSync(DB_PATH)) {
       fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-      fs.writeFileSync(DB_PATH, JSON.stringify([], null, 2));
+      fs.writeFileSync(DB_PATH, '[]');
     }
   }
 
   load() {
-    return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+    try {
+      const rawData = fs.readFileSync(DB_PATH, 'utf-8');
+      const data = JSON.parse(rawData);
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Error loading database:', error);
+      return [];
+    }
   }
 
   save(data) {
+    if (!Array.isArray(data)) {
+      console.error('Invalid data format. Expected array.');
+      return;
+    }
     fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
   }
 
@@ -64,25 +75,31 @@ module.exports = (bot) => {
     const args = ctx.message.text.split(' ').slice(1);
     const msgId = ctx.message.message_id;
 
-    // Validación de formato
+    // Validación de formato estricta
     if (!args[0] || !args[0].includes('.')) {
       return ctx.reply(
-        '⚠️ Formato: `/reg [nombre.edad]`\nEjemplo: `/reg jimmy.15`',
+        '⚠️ Formato requerido: `/reg [nombre.edad]`\nEjemplo: `/reg jimmy.15`',
         { reply_to_message_id: msgId, parse_mode: 'Markdown' }
       );
     }
 
     const [username, ageStr] = args[0].split('.');
-    const age = parseInt(ageStr) || 0;
+    const age = parseInt(ageStr, 10) || 0;
     const userId = ctx.from.id;
 
     try {
       const users = db.load();
-      const existingUser = users.find(u => u.id_telegram === userId);
+      
+      // Verificación de estructura crítica
+      if (!Array.isArray(users)) {
+        throw new Error('Estructura inválida de base de datos');
+      }
 
+      const existingUser = users.find(u => u.id_telegram === userId);
+      
       if (existingUser) {
         return ctx.reply(
-          '❌ ¡Ya estás registrado! Usa `/perfil` para ver tus datos.',
+          '❌ ¡Registro existente! Usa `/perfil` para ver tus datos.',
           { reply_to_message_id: msgId, parse_mode: 'Markdown' }
         );
       }
@@ -108,7 +125,7 @@ module.exports = (bot) => {
       users.push(newUser);
       db.save(users);
 
-      // Generar respuesta
+      // Construcción de respuesta
       const region = newUser.zona_horaria.split('/')[1].replace(/_/g, ' ');
       const caption = `
 ╔╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╍╗
@@ -159,26 +176,30 @@ module.exports = (bot) => {
 
     } catch (error) {
       console.error('Error en registro:', error);
-      ctx.reply('❌ Error en el registro', { reply_to_message_id: msgId });
+      ctx.reply('❌ Error crítico en el sistema', { reply_to_message_id: msgId });
     }
   });
 
-  // Sistema de eliminación
+  // Sistema de eliminación robusto
   bot.command('eliminarregistro', async (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);
     const msgId = ctx.message.message_id;
 
     if (!args[0]) {
       return ctx.reply(
-        '⚠️ Formato: `/eliminarregistro [número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
+        '⚠️ Formato requerido: `/eliminarregistro [número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
         { reply_to_message_id: msgId, parse_mode: 'Markdown' }
       );
     }
 
     try {
       const users = db.load();
-      const initialLength = users.length;
       
+      if (!Array.isArray(users)) {
+        throw new Error('Estructura inválida de base de datos');
+      }
+
+      const initialLength = users.length;
       const filtered = users.filter(user => 
         user.id_telegram !== ctx.from.id || 
         user.numero_serie !== args[0]
@@ -186,26 +207,30 @@ module.exports = (bot) => {
 
       if (filtered.length === initialLength) {
         return ctx.reply(
-          '❌ Registro no encontrado o número de serie inválido',
+          '❌ Combinación usuario/serie inválida',
           { reply_to_message_id: msgId, parse_mode: 'Markdown' }
         );
       }
 
       db.save(filtered);
-      ctx.reply('✅ Registro eliminado exitosamente', { reply_to_message_id: msgId });
+      ctx.reply('✅ Registro eliminado permanentemente', { reply_to_message_id: msgId });
 
     } catch (error) {
       console.error('Error eliminando registro:', error);
-      ctx.reply('❌ Error al eliminar el registro', { reply_to_message_id: msgId });
+      ctx.reply('❌ Error fatal al eliminar registro', { reply_to_message_id: msgId });
     }
   });
 
-  // Manejo del botón de eliminación
+  // Manejo profesional de botones
   bot.action('delete_account', async (ctx) => {
     await ctx.answerCbQuery();
     await ctx.reply(
-      '⚠️ Para eliminar tu cuenta usa:\n`/eliminarregistro [tu_número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
-      { parse_mode: 'Markdown', reply_to_message_id: ctx.message.message_id }
+      '⚠️ Para eliminar tu cuenta permanentemente:\n`/eliminarregistro [tu_número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
+      { 
+        parse_mode: 'Markdown', 
+        reply_to_message_id: ctx.message.message_id,
+        reply_markup: { remove_keyboard: true }
+      }
     );
   });
 };
