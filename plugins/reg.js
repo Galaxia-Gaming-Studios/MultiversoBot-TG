@@ -17,7 +17,7 @@ class ProbabilitySystem {
     ].filter(f => fs.existsSync(f.path));
 
     if (!files.length) return null;
-    
+
     const total = files.reduce((sum, f) => sum + f.prob, 0);
     const random = Math.random() * total;
     let cumulative = 0;
@@ -78,25 +78,41 @@ module.exports = (bot) => {
     // Validación de formato estricta
     if (!args[0] || !args[0].includes('.')) {
       return ctx.reply(
-        '⚠️ Formato requerido: `/reg [nombre.edad]`\nEjemplo: `/reg jimmy.15`',
+        '⚠️ Formato requerido: `/reg [nombre.edad]`\nEjemplo: `/reg jimmy.15`\n• Usa solo LETRAS en el nombre\n• Edad entre 1-120',
         { reply_to_message_id: msgId, parse_mode: 'Markdown' }
       );
     }
 
     const [username, ageStr] = args[0].split('.');
-    const age = parseInt(ageStr, 10) || 0;
     const userId = ctx.from.id;
+
+    // Validación de nombre
+    if (!/^[A-Za-zÁ-ÿ\s]+$/.test(username)) {
+      return ctx.reply(
+        '❌ El nombre solo puede contener letras y espacios.',
+        { reply_to_message_id: msgId }
+      );
+    }
+
+    // Validación de edad
+    const age = parseInt(ageStr, 10);
+    if (isNaN(age) || age < 1 || age > 120) {
+      return ctx.reply(
+        '❌ Edad inválida. Debe ser entre 1 y 120 años.',
+        { reply_to_message_id: msgId }
+      );
+    }
 
     try {
       const users = db.load();
-      
+
       // Verificación de estructura crítica
       if (!Array.isArray(users)) {
         throw new Error('Estructura inválida de base de datos');
       }
 
       const existingUser = users.find(u => u.id_telegram === userId);
-      
+
       if (existingUser) {
         return ctx.reply(
           '❌ ¡Registro existente! Usa `/perfil` para ver tus datos.',
@@ -157,7 +173,7 @@ module.exports = (bot) => {
       };
 
       const filePath = ProbabilitySystem.selectFile();
-      
+
       if (filePath) {
         const method = filePath.endsWith('.mp4') ? 'replyWithVideo' : 'replyWithPhoto';
         await ctx[method]({ source: filePath }, { 
@@ -180,6 +196,23 @@ module.exports = (bot) => {
     }
   });
 
+  // Comando para consultar número de serie
+  bot.command('myserie', async (ctx) => {
+    const users = db.load();
+    const user = users.find(u => u.id_telegram === ctx.from.id);
+    
+    if (user) {
+      ctx.reply(`🔢 Tu número de serie es:\n\`${user.numero_serie}\``, {
+        parse_mode: 'Markdown',
+        reply_to_message_id: ctx.message.message_id
+      });
+    } else {
+      ctx.reply('❌ ¡No estás registrado! Usa /reg para registrarte.', {
+        reply_to_message_id: ctx.message.message_id
+      });
+    }
+  });
+
   // Sistema de eliminación robusto
   bot.command('eliminarregistro', async (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);
@@ -194,7 +227,7 @@ module.exports = (bot) => {
 
     try {
       const users = db.load();
-      
+
       if (!Array.isArray(users)) {
         throw new Error('Estructura inválida de base de datos');
       }
