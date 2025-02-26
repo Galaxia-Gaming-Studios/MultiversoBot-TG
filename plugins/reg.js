@@ -9,11 +9,11 @@ const DB_PATH = path.join(__dirname, '..', 'database', 'reg.json');
 class ProbabilitySystem {
   static selectFile() {
     const files = [
-      { path: './src/menu_1.jpg', prob: 90 },
-      { path: './src/menu_2.mp4', prob: 60 },
-      { path: './src/menu_3.mp4', prob: 70 },
-      { path: './src/menu_4.mp4', prob: 60 },
-      { path: './src/menu_5.mp4', prob: 80 }
+      { path: './src/reg_1.jpg', prob: 90 },
+      { path: './src/flux_2.jpg', prob: 60 },
+      { path: './src/flux_3.jpg', prob: 70 },
+      { path: './src/flux_4.jpg', prob: 60 },
+      { path: './src/flux_5.jpg', prob: 80 }
     ].filter(f => fs.existsSync(f.path));
 
     if (!files.length) return null;
@@ -214,7 +214,7 @@ module.exports = (bot) => {
   });
 
   // Sistema de eliminación robusto
-  bot.command('eliminarregistro', async (ctx) => {
+  bot.command('delete_reg', async (ctx) => {
     const args = ctx.message.text.split(' ').slice(1);
     const msgId = ctx.message.message_id;
 
