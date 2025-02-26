@@ -9,7 +9,7 @@ const DB_PATH = path.join(__dirname, '..', 'database', 'reg.json');
 class ProbabilitySystem {
   static selectFile() {
     const files = [
-      { path: './src/reg_1.jpg', prob: 90 },
+      { path: './src/flux_1.jpg', prob: 90 },
       { path: './src/flux_2.jpg', prob: 60 },
       { path: './src/flux_3.jpg', prob: 70 },
       { path: './src/flux_4.jpg', prob: 60 },
