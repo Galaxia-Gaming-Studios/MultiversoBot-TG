@@ -220,7 +220,7 @@ module.exports = (bot) => {
 
     if (!args[0]) {
       return ctx.reply(
-        '⚠️ Formato requerido: `/eliminarregistro [número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
+        '⚠️ Formato requerido: `/delete_reg [número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
         { reply_to_message_id: msgId, parse_mode: 'Markdown' }
       );
     }
