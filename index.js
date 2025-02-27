@@ -6,6 +6,9 @@ const cfonts = require('cfonts');
 const gradient = require('gradient-string');
 const readline = require('readline');
 
+// Variable global para almacenar los comandos
+const comandosRegistrados = [];
+
 // Función para limpiar la carpeta ./tmp
 const limpiarTmp = () => {
     const tmpDir = './tmp';
@@ -151,6 +154,12 @@ const mostrarBanner = () => {
 const cargarComandos = (dir, bot) => {
     fs.readdirSync(dir, { withFileTypes: true }).forEach(item => {
         const fullPath = path.join(dir, item.name);
+        const registro = {
+            nombre: item.name,
+            estado: '✅ Cargado',
+            error: null
+        };
+
         if (item.isDirectory()) {
             cargarComandos(fullPath, bot);
         } else if (item.isFile() && item.name.endsWith('.js')) {
@@ -158,22 +167,12 @@ const cargarComandos = (dir, bot) => {
                 const comando = require(fullPath);
                 if (typeof comando === 'function') {
                     comando(bot);
-                    console.log(chalk.green(`
-╭╌╌╌╌╌╌╌╌╌╌╮
-╎Comando Cargado: ${item.name}
-╎Estado: Bien
-╰╌╌╌╌╌╌╌╌╌╌╯
-                    `));
                 }
             } catch (err) {
-                console.log(chalk.red(`
-╭╌╌╌╌╌╌╌╌╌╌╮
-╎Comando Cargado: ${item.name}
-╎Estado: Error
-╎Error: ${err.message}
-╰╌╌╌╌╌╌╌╌╌╌╯
-                `));
+                registro.estado = '⚠️ Error';
+                registro.error = err.message.substring(0, 50) + '...';
             }
+            comandosRegistrados.push(registro);
         }
     });
 };
@@ -233,7 +232,23 @@ const iniciarBot = async () => {
 
     rl.on('line', (input) => {
         if (input.trim() === '/comandos') {
-            // Mostrar comandos cargados (si es necesario)
+            console.log(chalk.cyan.bold('\n╭━━━━━━━━━━━━━━━━━━━━━≫'));
+            console.log(chalk.cyan.bold('╎  LISTADO DE COMANDOS  '));
+            console.log(chalk.cyan.bold('╰━━━━━━━━━━━━━━━━━━━━━≫'));
+            
+            comandosRegistrados.forEach(comando => {
+                const estadoColor = comando.estado.startsWith('✅') 
+                    ? chalk.green 
+                    : chalk.red;
+                
+                console.log(`
+╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌≫
+${chalk.blue(`╎ Comando: ${comando.nombre}`)}
+${chalk.yellow(`╎ Estado: `)}${estadoColor(comando.estado)}${comando.error ? `
+${chalk.red(`╎ Error: ${comando.error}`)}` : ''}
+╰╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌≫`);
+            });
+            console.log(chalk.cyan.bold('\n═⋆≫ Fin del listado ≪⋆═\n'));
         }
     });
 
