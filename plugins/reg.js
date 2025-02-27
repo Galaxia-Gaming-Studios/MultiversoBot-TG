@@ -200,14 +200,14 @@ module.exports = (bot) => {
   bot.command('myserie', async (ctx) => {
     const users = db.load();
     const user = users.find(u => u.id_telegram === ctx.from.id);
-    
+
     if (user) {
       ctx.reply(`🔢 Tu número de serie es:\n\`${user.numero_serie}\``, {
         parse_mode: 'Markdown',
         reply_to_message_id: ctx.message.message_id
       });
     } else {
-      ctx.reply('❌ ¡No estás registrado! Usa /reg para registrarte.', {
+      ctx.reply('❌ No estás registrado. Usa /reg para registrarte.', {
         reply_to_message_id: ctx.message.message_id
       });
     }
@@ -215,7 +215,18 @@ module.exports = (bot) => {
 
   // Sistema de eliminación robusto
   bot.command('delete_reg', async (ctx) => {
-    ctx.callbackQuery.message.message_id // Acceso correcto al ID del mensaje
+    const args = ctx.message.text.split(' ').slice(1);
+    const msgId = ctx.message.message_id;
+
+    const users = db.load();
+    const user = users.find(u => u.id_telegram === ctx.from.id);
+
+    if (!user) {
+      return ctx.reply('❌ Por favor regístrate primero usando /reg.', {
+        reply_to_message_id: msgId
+      });
+    }
+
     if (!args[0]) {
       return ctx.reply(
         '⚠️ Formato requerido: `/delete_reg [número_serie]`\nEjemplo: `/delete_reg ABC123XYZ`',
@@ -224,12 +235,6 @@ module.exports = (bot) => {
     }
 
     try {
-      const users = db.load();
-
-      if (!Array.isArray(users)) {
-        throw new Error('Estructura inválida de base de datos');
-      }
-
       const initialLength = users.length;
       const filtered = users.filter(user => 
         user.id_telegram !== ctx.from.id || 
