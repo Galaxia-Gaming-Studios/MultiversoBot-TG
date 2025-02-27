@@ -215,9 +215,7 @@ module.exports = (bot) => {
 
   // Sistema de eliminación robusto
   bot.command('delete_reg', async (ctx) => {
-    const args = ctx.message.text.split(' ').slice(1);
-    const msgId = ctx.message.message_id;
-
+    ctx.callbackQuery.message.message_id // Acceso correcto al ID del mensaje
     if (!args[0]) {
       return ctx.reply(
         '⚠️ Formato requerido: `/delete_reg [número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
