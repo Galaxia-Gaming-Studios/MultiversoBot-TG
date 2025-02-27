@@ -252,8 +252,8 @@ module.exports = (bot) => {
     }
   });
 
-// Eliminar Registro 
-bot.action('delete_account', async (ctx) => {
+  // Eliminar Registro 
+  bot.action('delete_account', async (ctx) => {
     await ctx.answerCbQuery(); // Responde al callback para evitar que el botón se quede "cargando"
 
     // Acceder al message_id correctamente desde el callbackQuery
@@ -271,4 +271,5 @@ bot.action('delete_account', async (ctx) => {
             reply_markup: { remove_keyboard: true }
         }
     );
-});
+  });
+};
