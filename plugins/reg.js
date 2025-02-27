@@ -218,7 +218,7 @@ module.exports = (bot) => {
     ctx.callbackQuery.message.message_id // Acceso correcto al ID del mensaje
     if (!args[0]) {
       return ctx.reply(
-        '⚠️ Formato requerido: `/delete_reg [número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
+        '⚠️ Formato requerido: `/delete_reg [número_serie]`\nEjemplo: `/delete_reg ABC123XYZ`',
         { reply_to_message_id: msgId, parse_mode: 'Markdown' }
       );
     }
@@ -252,16 +252,23 @@ module.exports = (bot) => {
     }
   });
 
-  // Manejo profesional de botones
-  bot.action('delete_account', async (ctx) => {
-    await ctx.answerCbQuery();
+// Eliminar Registro 
+bot.action('delete_account', async (ctx) => {
+    await ctx.answerCbQuery(); // Responde al callback para evitar que el botón se quede "cargando"
+
+    // Acceder al message_id correctamente desde el callbackQuery
+    const messageId = ctx.callbackQuery?.message?.message_id;
+
+    if (!messageId) {
+        return ctx.reply('❌ Error: No se pudo encontrar el mensaje original');
+    }
+
     await ctx.reply(
-      '⚠️ Para eliminar tu cuenta permanentemente:\n`/eliminarregistro [tu_número_serie]`\nEjemplo: `/eliminarregistro ABC123XYZ`',
-      { 
-        parse_mode: 'Markdown', 
-        reply_to_message_id: ctx.message.message_id,
-        reply_markup: { remove_keyboard: true }
-      }
+        '⚠️ Para eliminar tu cuenta:\nUsa `/delete_reg [tu_serie]`\nEjemplo: `/delete_reg ABC123`',
+        { 
+            parse_mode: 'Markdown', 
+            reply_to_message_id: messageId, // Usar el message_id correcto
+            reply_markup: { remove_keyboard: true }
+        }
     );
-  });
-};
+});
