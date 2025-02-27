@@ -224,14 +224,14 @@ const iniciarBot = async () => {
     // Cargar comandos desde la carpeta plugins
     cargarComandos(path.join(__dirname, 'plugins'), bot);
 
-    // Escuchar el comando /comandos en la consola
+    // Escuchar el comando /plugins en la consola
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
     });
 
     rl.on('line', (input) => {
-        if (input.trim() === '/comandos') {
+        if (input.trim() === '/plugins') {
             console.log(chalk.cyan.bold('\n╭━━━━━━━━━━━━━━━━━━━━━≫'));
             console.log(chalk.cyan.bold('╎  LISTADO DE COMANDOS  '));
             console.log(chalk.cyan.bold('╰━━━━━━━━━━━━━━━━━━━━━≫'));
