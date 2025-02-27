@@ -1,7 +1,7 @@
 const { Telegraf } = require('telegraf');
 const fs = require('fs');
 const path = require('path');
-const chalk = require(`chalk`);
+const chalk = require('chalk');
 const cfonts = require('cfonts');
 const gradient = require('gradient-string');
 const readline = require('readline');
@@ -18,18 +18,27 @@ const limpiarTmp = () => {
                 } else {
                     fs.unlinkSync(filePath);
                 }
-                console.log(`${chalk.green(`Eliminado:`)} ${filePath}`);
+                console.log(chalk.green(`
+╭╌╌╌╌╌╌╌╌╌╌╮
+╎Tmp Eliminado 
+╰╌╌╌╌╌╌╌╌╌╌╯
+                `));
             } catch (err) {
-                console.error(`${chalk.red(`Error al eliminar ${filePath}:`)}`, err);
+                console.error(chalk.red(`
+╭╌╌╌╌╌╌╌╌╌╌╮
+╎Tmp Error 
+╰╌╌╌╌╌╌╌╌╌╌╯
+                `));
+                console.error(chalk.red(`Error al eliminar ${filePath}:`), err);
             }
         });
     } else {
-        console.log(`${chalk.yellow('La carpeta ./tmp no existe.')}`);
+        console.log(chalk.yellow('La carpeta ./tmp no existe.'));
     }
 };
 
-// Ejecutar la limpieza cada hora (3600000 ms = 1 hora)
-setInterval(limpiarTmp, 3600000);
+// Ejecutar la limpieza cada 5 minutos (300000 ms = 5 minutos)
+setInterval(limpiarTmp, 300000);
 
 // Función para pedir el token
 const pedirToken = () => {
@@ -103,7 +112,7 @@ const mostrarBanner = () => {
         maxLength: '0',
     });
     console.log(banner.string);
-    
+
     const welcomeMessage = `
  ✧༺✦✮✦༻∞ 𝑇𝑒𝑙𝑒𝑔𝑟𝑎𝑚 ∞༺✦✮✦༻✧ 
 ╔═╗╔═╦╗─╔╦╗──╔════╦══╗
@@ -149,9 +158,21 @@ const cargarComandos = (dir, bot) => {
                 const comando = require(fullPath);
                 if (typeof comando === 'function') {
                     comando(bot);
+                    console.log(chalk.green(`
+╭╌╌╌╌╌╌╌╌╌╌╮
+╎Comando Cargado: ${item.name}
+╎Estado: Bien
+╰╌╌╌╌╌╌╌╌╌╌╯
+                    `));
                 }
             } catch (err) {
-                // No mostrar errores
+                console.log(chalk.red(`
+╭╌╌╌╌╌╌╌╌╌╌╮
+╎Comando Cargado: ${item.name}
+╎Estado: Error
+╎Error: ${err.message}
+╰╌╌╌╌╌╌╌╌╌╌╯
+                `));
             }
         }
     });
@@ -201,7 +222,7 @@ const iniciarBot = async () => {
     mostrarBanner();
     const bot = new Telegraf(token);
 
-    // Cargar comandos desde la carpeta comandos
+    // Cargar comandos desde la carpeta plugins
     cargarComandos(path.join(__dirname, 'plugins'), bot);
 
     // Escuchar el comando /comandos en la consola
