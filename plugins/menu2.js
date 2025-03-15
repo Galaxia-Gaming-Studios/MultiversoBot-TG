@@ -118,3 +118,5 @@ module.exports = (bot) => {
     bot.command('menurpg', async (ctx) => await sendMedia(ctx));
     bot.action('menu_rpg', async (ctx) => await sendMedia(ctx));
 };
+
+bot.handler.register = true;
