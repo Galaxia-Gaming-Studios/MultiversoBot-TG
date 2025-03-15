@@ -10,7 +10,8 @@ module.exports = (bot) => {
         const localPath = path.join(__dirname, '../tmp/temp-repo');
         const mainPath = path.join(__dirname, '../');
 
-        // Clonar o actualizar el repositorio
+        ctx.reply(' Iniciando actualización...');
+
         const updateRepo = async () => {
             if (!fs.existsSync(localPath)) {
                 await git.clone(repoUrl, localPath);
@@ -19,7 +20,6 @@ module.exports = (bot) => {
             }
         };
 
-        // Copiar todo el contenido del repositorio, excluyendo datos dentro de "database"
         const copyRepoContent = async () => {
             const copyDirectory = (source, destination) => {
                 const files = fs.readdirSync(source);
@@ -28,9 +28,8 @@ module.exports = (bot) => {
                     const sourceFile = path.join(source, file);
                     const destFile = path.join(destination, file);
 
-                    // Excluir datos dentro de "database"
                     if (sourceFile.includes(path.join('database', path.sep))) {
-                        return; // No copiar archivos dentro de "database"
+                        return;
                     }
 
                     if (fs.lstatSync(sourceFile).isDirectory()) {
@@ -40,7 +39,6 @@ module.exports = (bot) => {
                         copyDirectory(sourceFile, destFile);
                     } else {
                         fs.copyFileSync(sourceFile, destFile);
-                        ctx.reply(`Archivo copiado: ${destFile}`);
                     }
                 });
             };
@@ -49,20 +47,15 @@ module.exports = (bot) => {
         };
 
         try {
-            // Actualizar el repositorio
             await updateRepo();
-
-            // Copiar todo el contenido del repositorio
             await copyRepoContent();
-
-            // Eliminar el directorio temporal
             fs.rmSync(localPath, { recursive: true, force: true });
-            ctx.reply('Directorio temporal eliminado.');
 
-            ctx.reply('Actualización completada correctamente.');
+            ctx.reply('✅ Actualización completada. Reiniciando bot...');
+            process.exit(0); // Reinicia el bot
         } catch (error) {
             console.error('Error al actualizar el repositorio:', error);
-            ctx.reply('Hubo un error al actualizar el repositorio.');
+            ctx.reply('❌ Hubo un error al actualizar el repositorio. Por favor, revisa los logs.');
         }
     });
 };
