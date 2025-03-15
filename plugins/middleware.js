@@ -18,8 +18,8 @@ function checkRegistration() {
   return async (ctx, next) => {
     const userId = ctx.from.id;
 
-    // Verificar si el comando requiere registro
-    const requiresRegistration = ctx.handler?.register === true;
+    // Verificar si el comando requiere registro (usando ctx.state)
+    const requiresRegistration = ctx.state?.register === true;
 
     // Si el comando NO requiere registro, continuar
     if (!requiresRegistration) {
