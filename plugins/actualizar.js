@@ -10,8 +10,7 @@ module.exports = (bot) => {
         const localPath = path.join(__dirname, '../tmp/temp-repo');
         const mainPath = path.join(__dirname, '../');
 
-        ctx.reply(' Iniciando actualización...');
-
+        // Clonar o actualizar el repositorio
         const updateRepo = async () => {
             if (!fs.existsSync(localPath)) {
                 await git.clone(repoUrl, localPath);
@@ -20,6 +19,7 @@ module.exports = (bot) => {
             }
         };
 
+        // Copiar todo el contenido del repositorio, excluyendo datos dentro de "database"
         const copyRepoContent = async () => {
             const copyDirectory = (source, destination) => {
                 const files = fs.readdirSync(source);
@@ -28,8 +28,9 @@ module.exports = (bot) => {
                     const sourceFile = path.join(source, file);
                     const destFile = path.join(destination, file);
 
+                    // Excluir datos dentro de "database"
                     if (sourceFile.includes(path.join('database', path.sep))) {
-                        return;
+                        return; // No copiar archivos dentro de "database"
                     }
 
                     if (fs.lstatSync(sourceFile).isDirectory()) {
@@ -39,6 +40,7 @@ module.exports = (bot) => {
                         copyDirectory(sourceFile, destFile);
                     } else {
                         fs.copyFileSync(sourceFile, destFile);
+                        ctx.reply(`Archivo copiado: ${destFile}`);
                     }
                 });
             };
@@ -47,15 +49,20 @@ module.exports = (bot) => {
         };
 
         try {
+            // Actualizar el repositorio
             await updateRepo();
-            await copyRepoContent();
-            fs.rmSync(localPath, { recursive: true, force: true });
 
-            ctx.reply('✅ Actualización completada. Reiniciando bot...');
-            process.exit(0); // Reinicia el bot
+            // Copiar todo el contenido del repositorio
+            await copyRepoContent();
+
+            // Eliminar el directorio temporal
+            fs.rmSync(localPath, { recursive: true, force: true });
+            ctx.reply('Directorio temporal eliminado.');
+
+            ctx.reply('Actualización completada correctamente.');
         } catch (error) {
             console.error('Error al actualizar el repositorio:', error);
-            ctx.reply('❌ Hubo un error al actualizar el repositorio. Por favor, revisa los logs.');
+            ctx.reply('Hubo un error al actualizar el repositorio.');
         }
     });
 };
