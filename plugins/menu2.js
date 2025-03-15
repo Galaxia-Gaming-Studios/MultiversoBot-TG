@@ -113,7 +113,7 @@ async function sendMedia(ctx) {
         });
     }
 }
-bot.handler.register = true; //Registro requerido 
+ctx.state.register = true; //Registro requerido 
 module.exports = (bot) => {
     bot.command('menurpg', async (ctx) => await sendMedia(ctx));
     bot.action('menu_rpg', async (ctx) => await sendMedia(ctx));
