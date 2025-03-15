@@ -41,7 +41,7 @@ const limpiarTmp = () => {
 };
 
 // Ejecutar la limpieza cada 5 minutos (300000 ms = 5 minutos)
-setInterval(limpiarTmp, 300000);
+setInterval(limpiarTmp, 60000);
 
 // Función para pedir el token
 const pedirToken = () => {
