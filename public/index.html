@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiversoBot Dashboard</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .bot-info {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌌 MultiversoBot Dashboard</h1>
+            <p>Panel de control del bot de Telegram</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h2>Uso de Memoria</h2>
+                <p id="memory">Cargando...</p>
+            </div>
+            <div class="stat-card">
+                <h2>Tiempo de Actividad</h2>
+                <p id="uptime">Cargando...</p>
+            </div>
+            <div class="stat-card">
+                <h2>CPU</h2>
+                <p id="cpu">Cargando...</p>
+            </div>
+        </div>
+        
+        <div class="bot-info">
+            <h2>Información del Bot</h2>
+            <p>Estado: <span id="bot-status">Conectado</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Función para formatear segundos a horas:minutos:segundos
+        function formatUptime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${hours}h ${minutes}m ${secs}s`;
+        }
+
+        // Obtener datos del servidor
+        async function fetchData() {
+            try {
+                const response = await fetch('/info');
+                const data = await response.json();
+                
+                document.getElementById('memory').textContent = `${(data.memory).toFixed(2)} MB`;
+                document.getElementById('uptime').textContent = formatUptime(data.uptime);
+                document.getElementById('cpu').textContent = `${data.cpus} núcleos`;
+                
+                setTimeout(fetchData, 5000); // Actualizar cada 5 segundos
+            } catch (error) {
+                console.error('Error al obtener datos:', error);
+                setTimeout(fetchData, 10000); // Reintentar después de 10 segundos si hay error
+            }
+        }
+
+        // Iniciar
+        fetchData();
+    </script>
+</body>
+</html>
