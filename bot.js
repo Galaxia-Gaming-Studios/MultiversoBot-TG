@@ -6,7 +6,7 @@ const cfonts = require('cfonts');
 const gradient = require('gradient-string');
 const readline = require('readline');
 //====== Carga A Server.js ======
-require('./server');
+
 //====== Fin ======
 
 // Variable global para almacenar los comandos
@@ -32,7 +32,7 @@ const limpiarTmp = () => {
             } catch (err) {
                 console.error(chalk.red(`
 ╭╌╌╌╌╌╌╌╌╌╌╮
-╎❌Tmp Error❌
+╎❌Tmp Error❌ 
 ╰╌╌╌╌╌╌╌╌╌╌╯
                 `));
                 console.error(chalk.red(`Error al eliminar ${filePath}:`), err);
@@ -61,7 +61,7 @@ const pedirToken = () => {
     });
 };
 
-// Función para validar si el token es válido
+// Validar si el token es válido
 const validarToken = async (token) => {
     try {
         const bot = new Telegraf(token);
@@ -76,28 +76,27 @@ const validarToken = async (token) => {
 
 // Función para obtener el token
 const obtenerToken = async () => {
+    const tokenPath = './config/token.json';
+
     let token;
-
-    // Intentar leer el token desde una variable de entorno directamente
-    token = process.env.BOT_TOKEN;
-
-    if (token) {
-        const esValido = await validarToken(token);
-        if (esValido) {
-            console.log("Token leído desde la variable de entorno BOT_TOKEN.");
-            return token;
-        } else {
-            console.log(chalk.yellow("El token en la variable de entorno BOT_TOKEN no es válido."));
-            token = null; // Forzar la solicitud al usuario
+    if (fs.existsSync(tokenPath)) {
+        try {
+            const config = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
+            token = config.token;
+        } catch (err) {
+            console.error("Error al leer el archivo token.json. Regenerando...");
         }
     }
 
-    // Si no hay token válido en la variable de entorno, pedir al usuario
+    // Si no hay token válido, pedir al usuario
     while (!token) {
         token = await pedirToken();
         const esValido = await validarToken(token);
         if (esValido) {
-            console.log("Token ingresado y validado correctamente.");
+            // Crear token.json
+            fs.mkdirSync('./config', { recursive: true });
+            fs.writeFileSync(tokenPath, JSON.stringify({ token }, null, 2));
+            console.log("Token guardado correctamente en token.json");
         } else {
             token = null; // Forzar nueva solicitud
         }
@@ -121,7 +120,7 @@ const mostrarBanner = () => {
     console.log(banner.string);
 
     const welcomeMessage = `
- ✧༺✦✮✦༻∞ 𝑇𝑒𝑙𝑒𝑔𝑟𝑎𝑚 ∞༺✦✮✦༻✧
+ ✧༺✦✮✦༻∞ 𝑇𝑒𝑙𝑒𝑔𝑟𝑎𝑚 ∞༺✦✮✦༻✧ 
 ╔═╗╔═╦╗─╔╦╗──╔════╦══╗
 ║║╚╝║║║─║║║──║╔╗╔╗╠╣╠╝
 ║╔╗╔╗║║─║║║──╚╝║║╚╝║║─
@@ -239,12 +238,12 @@ const iniciarBot = async () => {
             console.log(chalk.cyan.bold('\n╭━━━━━━━━━━━━━━━━━━━━━≫'));
             console.log(chalk.cyan.bold('╎  LISTADO DE COMANDOS  '));
             console.log(chalk.cyan.bold('╰━━━━━━━━━━━━━━━━━━━━━≫'));
-
+            
             comandosRegistrados.forEach(comando => {
-                const estadoColor = comando.estado.startsWith('✅')
-                    ? chalk.green
+                const estadoColor = comando.estado.startsWith('✅') 
+                    ? chalk.green 
                     : chalk.red;
-
+                
                 console.log(`
 ╭╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌≫
 ${chalk.blue(`╎ Comando: ${comando.nombre}`)}
