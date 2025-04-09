@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const si = require('systeminformation');
 const app = express();
-
+require('./bot.js');
 // Configurar middleware para archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
