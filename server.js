@@ -1,49 +1,42 @@
 const express = require('express');
 const path = require('path');
-const os = require('os');
-const si = require('systeminformation');
+const fs = require('fs');
 const app = express();
-require('./bot.js');
-// Configurar middleware para archivos estáticos
+
+// Middleware para procesar formularios
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Ruta para la información del sistema
-app.get('/info', async (req, res) => {
-    const info = {
-        memory: process.memoryUsage().heapUsed / 1024 / 1024,
-        system: os.type(),
-        cpu: os.cpus().length,
-        uptime: process.uptime(),
-    };
+// Ruta para mostrar el formulario del token
+app.get('/token', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'token.html'));
+});
+
+// Ruta para procesar el token
+app.post('/save-token', (req, res) => {
+    const { token } = req.body;
+    const tokenPath = './config/token.json';
 
     try {
-        const memory = await si.memory();
-        res.json({
-            memory: memory.used / 1024 / 1024,
-            cpus: os.cpus().length,
-            uptime: process.uptime(),
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener información del sistema' });
+        fs.mkdirSync('./config', { recursive: true });
+        fs.writeFileSync(tokenPath, JSON.stringify({ token }, null, 2));
+        res.send('Token guardado correctamente. Puedes iniciar el bot ahora.');
+    } catch (err) {
+        res.status(500).send('Error al guardar el token');
     }
 });
 
-// Ruta para el monitor
-app.get('/monitor', async (req, res) => {
-    const info = {
-        memory: process.memoryUsage().heapUsed / 1024 / 1024,
-        system: os.type(),
-        cpu: os.cpus().length,
-        uptime: process.uptime(),
-    };
-    res.json(info);
-});
+// Cargar el bot automáticamente si existe el token
+const tokenPath = './config/token.json';
+if (fs.existsSync(tokenPath)) {
+    require('./a');
+    console.log('Bot iniciado automáticamente');
+} else {
+    console.log('Por favor ingresa el token en http://localhost:3000/token');
+}
 
-// Iniciar el servidor
+// Iniciar servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor Express iniciado en el puerto ${PORT}`);
-    console.log(`Visita http://localhost:${PORT} para ver la página web`);
+    console.log(`Servidor en http://localhost:${PORT}`);
 });
-
-module.exports = app;
