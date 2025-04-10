@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Configurar Token del Bot</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; }
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input, button { padding: 10px; font-size: 16px; }
+        button { background: #4CAF50; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Configurar Token del Bot</h1>
+    <form action="/save-token" method="POST">
+        <input type="password" name="token" placeholder="Token de Telegram" required>
+        <button type="submit">Guardar Token</button>
+    </form>
+    <p>Después de guardar el token, el bot se iniciará automáticamente.</p>
+</body>
+</html>
